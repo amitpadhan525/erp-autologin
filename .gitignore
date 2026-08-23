@@ -1,0 +1,72 @@
+# Built application files
+*.apk
+*.aar
+*.aab
+*.ap_
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated and build files
+bin/
+gen/
+out/
+build/
+app/build/
+/*/build/
+captures/
+.cxx/
+*.log
+
+# Gradle files
+.gradle/
+
+# Local configuration & environment files
+local.properties
+.env
+*.env
+
+# Proguard / Obfuscation
+proguard/
+*.mapping
+
+# Android Studio / IntelliJ IDEA
+*.iml
+.idea/
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/shelf/
+.idea/assetWizardSettings.xml
+
+# VS Code
+.vscode/
+
+# Python / Machine Learning
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.pth
+*.pt
+*.onnx
+*.pkl
+*.h5
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

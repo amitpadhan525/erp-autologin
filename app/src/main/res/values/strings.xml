@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">GIET ERP</string>
+    <string name="title_settings">Credentials &amp; Settings</string>
+    <string name="save_credentials">Save &amp; Auto-Login</string>
+</resources>

@@ -1,0 +1,9 @@
+# Ignore all APK and bundle binaries from Git history
+*.apk
+*.aab
+*.zip
+*.idsig
+
+# Keep this folder and documentation tracked in Git
+!.gitignore
+!README.md

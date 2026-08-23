@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand / Primary (Light Mode) -->
+    <color name="primary">#CF1020</color>
+    <color name="primary_dark">#990B17</color>
+    <color name="primary_light">#FDA4AF</color>
+
+    <!-- Accents -->
+    <color name="accent_color">#0284C7</color>
+    <color name="accent_green">#059669</color>
+    <color name="accent_amber">#D97706</color>
+    <color name="accent_red">#DC2626</color>
+
+    <!-- Neutrals & Backgrounds (Light Mode) -->
+    <color name="bg_color">#F8FAFC</color>
+    <color name="surface_color">#FFFFFF</color>
+    <color name="surface_card">#F1F5F9</color>
+    <color name="border_subtle">#E2E8F0</color>
+
+    <!-- Status Pill -->
+    <color name="status_pill_bg">#F1F5F9</color>
+    <color name="status_pill_text">#0284C7</color>
+
+    <!-- Typography (Light Mode) -->
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#475569</color>
+    <color name="text_muted">#64748B</color>
+
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

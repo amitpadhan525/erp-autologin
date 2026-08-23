@@ -1,0 +1,17 @@
+# GIET ERP Auto-Login — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# ── Web server ────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+
+# ── AI CAPTCHA solver ─────────────────────────────────────
+ddddocr>=1.4.11
+
+# ── CRNN model training ───────────────────────────────────
+torch>=2.2.0
+torchvision>=0.17.0
+Pillow>=10.0.0
+
+# ── FastAPI helpers ───────────────────────────────────────
+python-multipart>=0.0.9
