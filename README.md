@@ -6,7 +6,7 @@
 
 <br />
 
-<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest">
+<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v1.0.0.apk">
   <img src="assets/download_btn.svg" alt="Download Release v1.0.0" width="260" />
 </a>
 
@@ -22,7 +22,7 @@
 
 ---
 
-> 📥 **Quick Download:** Get the latest ready-to-install Android APK directly from [**GitHub Releases (v1.0.0)**](https://github.com/amitpadhan525/erp-autologin/releases/latest).
+> 📥 **Direct Download:** [**Click to Download erp-autologin-v1.0.0.apk**](https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v1.0.0.apk) | [View All Releases](https://github.com/amitpadhan525/erp-autologin/releases)
 
 ---
 
