@@ -1,5 +1,7 @@
 # 📦 Release APKs & GitHub Releases
 
+[![Download Latest APK](https://img.shields.io/badge/Download-Latest_APK-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
+
 This directory is designated for storing built APKs (e.g., debug or release builds) before uploading them to **GitHub Releases**.
 
 > **Note:** `.apk` and `.aab` binary files in this folder are ignored by Git (via [releases/.gitignore](.gitignore)) to prevent bloating the Git repository history.

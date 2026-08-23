@@ -1,5 +1,8 @@
 # 🎓 GIET ERP Auto-Login & AI CAPTCHA Solver
 
+[![Download Latest APK](https://img.shields.io/badge/Download-Latest_APK_(v1.0.0)-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
+
+[![GitHub Release](https://img.shields.io/github/v/release/amitpadhan525/erp-autologin?color=blue)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com)
 [![ML Kit](https://img.shields.io/badge/OCR-Google%20ML%20Kit-orange.svg)](https://developers.google.com/ml-kit)
