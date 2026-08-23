@@ -16,7 +16,8 @@
   <!-- Text -->
   <g fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
     <text x="32" y="33" font-size="20" font-weight="900" letter-spacing="1.5">DOWNLOAD</text>
-    <text x="32" y="47" font-size="11" font-weight="600" fill="#E8F8E5" letter-spacing="0.8">RELEASE v1.0.0</text>
+    <text x="32" y="47" font-size="11" font-weight="600" fill="#E8F8E5" letter-spacing="0.8">RELEASE v2.0.0</text>
+
   </g>
   
   <!-- Arrow Circle & Icon -->

@@ -7,10 +7,11 @@
 <br />
 
 <a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v2.0.0.apk">
-  <img src="assets/download_btn.svg" alt="Download Release v2.0.0" width="260" />
+  <img src="https://img.shields.io/badge/📥%20DOWNLOAD%20APK-RELEASE%20v2.0.0-2ea44f?style=for-the-badge&logo=android&logoColor=white" height="50" alt="Download Release v2.0.0" />
 </a>
 
 <br /><br />
+
 
 [![Platform](https://img.shields.io/badge/Platform-Android_7.0%2B-3DDC84?style=flat&logo=android&logoColor=white)](https://developer.android.com)
 [![ONNX](https://img.shields.io/badge/Neural_Engine-ONNX_Runtime-005CED?style=flat&logo=onnx&logoColor=white)](https://onnxruntime.ai)
