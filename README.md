@@ -6,9 +6,11 @@
 
 <br />
 
-[![Download](https://img.shields.io/badge/⬇️_Download-Release_v1.0.0-2ea44f?style=for-the-badge)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
+<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest">
+  <img src="assets/download_btn.svg" alt="Download Release v1.0.0" width="260" />
+</a>
 
-<br />
+<br /><br />
 
 [![Platform](https://img.shields.io/badge/Platform-Android_7.0%2B-3DDC84?style=flat&logo=android&logoColor=white)](https://developer.android.com)
 [![ML Kit](https://img.shields.io/badge/OCR-Google_ML_Kit-FBBC04?style=flat&logo=google&logoColor=white)](https://developers.google.com/ml-kit)

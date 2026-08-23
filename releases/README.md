@@ -2,7 +2,13 @@
 
 # 📦 Release APKs & GitHub Releases
 
-[![Download](https://img.shields.io/badge/⬇️_Download-Release_v1.0.0-2ea44f?style=for-the-badge)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
+<br />
+
+<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest">
+  <img src="../assets/download_btn.svg" alt="Download Release v1.0.0" width="260" />
+</a>
+
+<br /><br />
 
 </div>
 
