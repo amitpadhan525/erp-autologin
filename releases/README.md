@@ -5,10 +5,11 @@
 <br />
 
 <a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v2.0.0.apk">
-  <img src="https://img.shields.io/badge/📥%20DOWNLOAD%20APK-RELEASE%20v2.0.0-2ea44f?style=for-the-badge&logo=android&logoColor=white" height="65" alt="Download Release v2.0.0" />
+  <img src="../assets/download_btn.svg" alt="Download APK" width="260" />
 </a>
 
 <br /><br />
+
 
 
 
