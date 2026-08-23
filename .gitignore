@@ -59,6 +59,7 @@ ENV/
 *.pth
 *.pt
 *.onnx
+!app/src/main/assets/*.onnx
 *.pkl
 *.h5
 

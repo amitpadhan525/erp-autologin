@@ -61,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
 
         prefs = getSharedPreferences("GIET_ERP_PREFS", MODE_PRIVATE);
 
+        // Initialize On-Device Neural CAPTCHA Solver
+        CaptchaSolver.init(getApplicationContext());
+
         topBarCard   = findViewById(R.id.topBarCard);
         webView      = findViewById(R.id.webView);
         progressBar  = findViewById(R.id.progressBar);
@@ -163,11 +166,17 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 Log.d(TAG, "Page Finished: " + url);
 
+                // Flush cookies to ensure session persistence
+                CookieManager.getInstance().flush();
+
                 // Enable HTML autocomplete attributes for password autofill
                 enableWebAutofill();
 
                 boolean isLogin = isLoginPage(url);
                 setTopBarVisibility(isLogin);
+
+                // Reset state for new page load
+                isAutoFilling = false;
 
                 if (!isLogin) {
                     // Successfully logged in / inside student portal -> Pure Fullscreen Website
@@ -183,8 +192,8 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                // On login page with credentials -> Trigger CAPTCHA detection and auto-fill
-                triggerCaptchaDetection();
+                // On login page with credentials -> Trigger CAPTCHA detection and auto-fill with 250ms debounce
+                webView.postDelayed(() -> triggerCaptchaDetection(), 250);
             }
         });
     }
@@ -244,30 +253,32 @@ public class MainActivity extends AppCompatActivity {
             "   }" +
             "   function extract() {" +
             "       try {" +
-            "           if (!img.complete || img.naturalWidth === 0) {" +
-            "               setTimeout(extract, 250);" +
+            "           if (!img.complete || img.naturalWidth === 0 || img.naturalHeight === 0) {" +
+            "               setTimeout(extract, 150);" +
             "               return;" +
             "           }" +
             "           var canvas = document.createElement('canvas');" +
             "           canvas.width = img.naturalWidth || 100;" +
             "           canvas.height = img.naturalHeight || 40;" +
             "           var ctx = canvas.getContext('2d');" +
+            "           ctx.fillStyle = '#FFFFFF';" +
+            "           ctx.fillRect(0, 0, canvas.width, canvas.height);" +
             "           ctx.drawImage(img, 0, 0);" +
             "           var dataUrl = canvas.toDataURL('image/png');" +
             "           if (dataUrl && dataUrl.length > 50) {" +
             "               window.AndroidBridge.onCaptchaExtracted(dataUrl);" +
             "           } else {" +
             "               window.AndroidBridge.onStatusUpdate('Retrying CAPTCHA capture...');" +
-            "               setTimeout(extract, 300);" +
+            "               setTimeout(extract, 200);" +
             "           }" +
             "       } catch (e) {" +
             "           window.AndroidBridge.onStatusUpdate('Capture Error: ' + e.message);" +
             "       }" +
             "   }" +
             "   if (img.complete && img.naturalWidth > 0) {" +
-            "       extract();" +
+            "       setTimeout(extract, 200);" +
             "   } else {" +
-            "       img.onload = extract;" +
+            "       img.onload = function() { setTimeout(extract, 200); };" +
             "       setTimeout(extract, 400);" +
             "   }" +
             "})();";
@@ -284,6 +295,7 @@ public class MainActivity extends AppCompatActivity {
     private void fillFormAndSubmit(String solvedCaptcha) {
         String username = prefs.getString("username", "").trim();
         String password = prefs.getString("password", "").trim();
+        final String cleanCaptcha = (solvedCaptcha != null) ? solvedCaptcha.toUpperCase().trim() : "";
 
         String jsFill =
             "(function() {" +
@@ -293,18 +305,32 @@ public class MainActivity extends AppCompatActivity {
             "   if (userField && passField && capField) {" +
             "       userField.value = '" + username.replace("'", "\\'") + "';" +
             "       passField.value = '" + password.replace("'", "\\'") + "';" +
-            "       capField.value  = '" + solvedCaptcha.replace("'", "\\'") + "';" +
-            "       var form = userField.closest('form') || document.forms[0];" +
-            "       if (form) { form.submit(); }" +
+            "       capField.value  = '" + cleanCaptcha.replace("'", "\\'") + "';" +
+            "       ['input', 'change', 'blur', 'keyup'].forEach(function(evt) {" +
+            "           userField.dispatchEvent(new Event(evt, { bubbles: true }));" +
+            "           passField.dispatchEvent(new Event(evt, { bubbles: true }));" +
+            "           capField.dispatchEvent(new Event(evt, { bubbles: true }));" +
+            "       });" +
+            "       setTimeout(function() {" +
+            "           var btn = document.getElementById('LoginButton');" +
+            "           if (btn) {" +
+            "               btn.removeAttribute('disabled');" +
+            "               btn.click();" +
+            "           } else {" +
+            "               var form = userField.closest('form') || document.forms[0];" +
+            "               if (form) { form.submit(); }" +
+            "           }" +
+            "       }, 120);" +
             "   }" +
             "})();";
 
         runOnUiThread(() -> {
-            setStatus("✅ Solved: '" + solvedCaptcha + "' — Auto-filling & Logging in...", "#22C55E");
+            setStatus("✅ Solved: '" + cleanCaptcha + "' — Auto-filling & Logging in...", "#22C55E");
             webView.evaluateJavascript(jsFill, null);
             isAutoFilling = false;
         });
     }
+
 
     /**
      * Refreshes the CAPTCHA image element on the page if recognition needs a retry.
@@ -327,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void onCaptchaExtracted(String base64Data) {
             isAutoFilling = true;
-            runOnUiThread(() -> setStatus("Converting CAPTCHA image to text on-device...", "#38BDF8"));
+            runOnUiThread(() -> setStatus("Solving CAPTCHA with Neural Engine...", "#38BDF8"));
 
             CaptchaSolver.solveBase64(base64Data, captchaText -> {
                 Log.d(TAG, "OCR Solved Text: " + captchaText);

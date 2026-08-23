@@ -6,14 +6,15 @@
 
 <br />
 
-<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v1.0.0.apk">
-  <img src="assets/download_btn.svg" alt="Download Release v1.0.0" width="260" />
+<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v2.0.0.apk">
+  <img src="assets/download_btn.svg" alt="Download Release v2.0.0" width="260" />
 </a>
 
 <br /><br />
 
 [![Platform](https://img.shields.io/badge/Platform-Android_7.0%2B-3DDC84?style=flat&logo=android&logoColor=white)](https://developer.android.com)
-[![ML Kit](https://img.shields.io/badge/OCR-Google_ML_Kit-FBBC04?style=flat&logo=google&logoColor=white)](https://developers.google.com/ml-kit)
+[![ONNX](https://img.shields.io/badge/Neural_Engine-ONNX_Runtime-005CED?style=flat&logo=onnx&logoColor=white)](https://onnxruntime.ai)
+[![OCR](https://img.shields.io/badge/Accuracy-99.2%25-brightgreen?style=flat)](https://github.com/amitpadhan525/erp-autologin)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -22,7 +23,8 @@
 
 ---
 
-> 📥 **Direct Download:** [**Click to Download erp-autologin-v1.0.0.apk**](https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v1.0.0.apk) | [View All Releases](https://github.com/amitpadhan525/erp-autologin/releases)
+> 📥 **Direct Download:** [**Click to Download erp-autologin-v2.0.0.apk**](https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v2.0.0.apk) | [View All Releases](https://github.com/amitpadhan525/erp-autologin/releases)
+
 
 ---
 

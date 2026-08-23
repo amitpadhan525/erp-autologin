@@ -10,8 +10,8 @@ android {
         applicationId "com.giet.erp"
         minSdk 24
         targetSdk 35
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "2.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -37,6 +37,10 @@ dependencies {
     // Google ML Kit On-Device OCR for offline CAPTCHA recognition fallback
     implementation 'com.google.mlkit:text-recognition:16.0.0'
 
+    // High-Accuracy On-Device Neural Network Inference (ONNX Runtime)
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.17.0'
+
     // RecyclerView (referenced in activity_main.xml)
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
 }
+
