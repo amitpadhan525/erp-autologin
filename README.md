@@ -1,15 +1,27 @@
+<div align="center">
+
 # 🎓 GIET ERP Auto-Login & AI CAPTCHA Solver
 
-[![Download Latest APK](https://img.shields.io/badge/Download-Latest_APK_(v1.0.0)-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
+**Automated login assistant with on-device AI CAPTCHA recognition tailored for GIET BBS R ERP.**
 
-[![GitHub Release](https://img.shields.io/github/v/release/amitpadhan525/erp-autologin?color=blue)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
+<br />
+
+[![Download APK](https://img.shields.io/badge/Download_APK-v1.0.0_Latest-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
+[![View Releases](https://img.shields.io/badge/All_Releases-GitHub-0969da?style=for-the-badge&logo=github&logoColor=white)](https://github.com/amitpadhan525/erp-autologin/releases)
+
+<br />
+
+[![Platform](https://img.shields.io/badge/Platform-Android_7.0%2B-3DDC84?style=flat&logo=android&logoColor=white)](https://developer.android.com)
+[![ML Kit](https://img.shields.io/badge/OCR-Google_ML_Kit-FBBC04?style=flat&logo=google&logoColor=white)](https://developers.google.com/ml-kit)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com)
-[![ML Kit](https://img.shields.io/badge/OCR-Google%20ML%20Kit-orange.svg)](https://developers.google.com/ml-kit)
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-teal.svg)](https://fastapi.tiangolo.com)
 
-An automated persistent login assistant and intelligent CAPTCHA solver tailored for the **GIET BBS R ERP Portal** (`http://gietbbsrerp.in/`). The application eliminates the friction of entering credentials and solving distorted CAPTCHAs upon session expirations.
+</div>
+
+---
+
+> 📥 **Quick Download:** Get the latest ready-to-install Android APK directly from [**GitHub Releases (v1.0.0)**](https://github.com/amitpadhan525/erp-autologin/releases/latest).
 
 ---
 
