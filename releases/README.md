@@ -2,7 +2,7 @@
 
 # 📦 Release APKs & GitHub Releases
 
-[![Download Latest APK](https://img.shields.io/badge/Download_APK-v1.0.0_Latest-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
+[![Download](https://img.shields.io/badge/⬇️_Download-Release_v1.0.0-2ea44f?style=for-the-badge)](https://github.com/amitpadhan525/erp-autologin/releases/latest)
 
 </div>
 
