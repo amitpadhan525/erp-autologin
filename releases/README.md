@@ -4,7 +4,7 @@
 
 <br />
 
-<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v2.0.0.apk">
+<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v2.1.0.apk">
   <img src="../assets/download_btn.svg" alt="Download APK" width="260" />
 </a>
 
