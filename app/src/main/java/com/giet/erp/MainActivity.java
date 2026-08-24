@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipeRefresh;
+    private View splashLayout;
     private SharedPreferences prefs;
 
     private boolean isAutoFilling = false;
@@ -61,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         webView      = findViewById(R.id.webView);
         progressBar  = findViewById(R.id.progressBar);
         swipeRefresh = findViewById(R.id.swipeRefresh);
+        splashLayout = findViewById(R.id.splashLayout);
 
         swipeRefresh.setOnRefreshListener(() -> {
             isAutoFilling = false;
@@ -119,7 +121,12 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setProgress(newProgress);
                 } else {
                     progressBar.setVisibility(View.GONE);
-                    swipeRefresh.setRefreshing(false);
+                    String username = prefs.getString("username", "").trim();
+                    String password = prefs.getString("password", "").trim();
+                    boolean hasSaved = !username.isEmpty() && !password.isEmpty();
+                    if (!(isLoginPage(view.getUrl()) && hasSaved)) {
+                        swipeRefresh.setRefreshing(false);
+                    }
                 }
 
                 // Early injection & instant credential pre-fill as soon as DOM renders
@@ -131,6 +138,23 @@ public class MainActivity extends AppCompatActivity {
         });
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                String username = prefs.getString("username", "").trim();
+                String password = prefs.getString("password", "").trim();
+                boolean hasSaved = !username.isEmpty() && !password.isEmpty();
+                
+                if (isLoginPage(url) && hasSaved) {
+                    webView.setVisibility(View.INVISIBLE);
+                    splashLayout.setVisibility(View.VISIBLE);
+                    swipeRefresh.post(() -> swipeRefresh.setRefreshing(false));
+                } else {
+                    webView.setVisibility(View.VISIBLE);
+                    splashLayout.setVisibility(View.GONE);
+                }
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return false;
@@ -182,6 +206,12 @@ public class MainActivity extends AppCompatActivity {
 
                 boolean isLogin = isLoginPage(url);
                 isAutoFilling = false;
+                
+                if (!isLogin) {
+                    webView.setVisibility(View.VISIBLE);
+                    splashLayout.setVisibility(View.GONE);
+                    swipeRefresh.setRefreshing(false);
+                }
 
                 if (isLogin) {
                     // 1. Inject credential auto-capture and Google Password Manager hooks
@@ -578,6 +608,9 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         runOnUiThread(() -> {
                             isAutoFilling = false;
+                            webView.setVisibility(View.VISIBLE);
+                            splashLayout.setVisibility(View.GONE);
+                            swipeRefresh.setRefreshing(false);
                             if (captchaText != null && !captchaText.isEmpty()) {
                                 if (hasSavedCredentials) {
                                     fillFormAndSubmit(captchaText.trim());

@@ -20,23 +20,61 @@
         android:max="100"
         android:visibility="gone" />
 
-    <!-- Pure full-screen Website WebView with swipe to refresh -->
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefresh"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:importantForAutofill="yes"
-        app:swipeRefreshLayoutProgressSpinnerBackgroundColor="@color/surface_card">
+        android:layout_weight="1">
 
-        <WebView
-            android:id="@+id/webView"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:importantForAutofill="yes"
-            android:background="@color/bg_color" />
+            app:swipeRefreshLayoutProgressSpinnerBackgroundColor="@color/surface_card">
+    
+            <WebView
+                android:id="@+id/webView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAutofill="yes"
+                android:background="@color/bg_color" />
+    
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        <!-- Splash screen overlay for background login -->
+        <LinearLayout
+            android:id="@+id/splashLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:background="@color/bg_color"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:src="@mipmap/ic_launcher"
+                android:contentDescription="App Logo" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Logging in securely..."
+                android:textColor="@color/primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:indeterminate="true"
+                android:indeterminateTint="@color/primary" />
+        </LinearLayout>
+
+    </FrameLayout>
 
 </LinearLayout>
 
