@@ -2,11 +2,11 @@ package com.giet.erp;
 
 import android.content.SharedPreferences;
 import android.net.http.SslError;
-import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.view.autofill.AutofillManager;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
@@ -31,6 +31,14 @@ public class MainActivity extends AppCompatActivity {
     private static final String ERP_PRIMARY_URL = "https://gietbbsrerp.in/";
     private static final String ERP_FALLBACK_URL = "http://gietbbsrerp.in/";
 
+    private enum AppState {
+        LOGGING_IN,   // Background login in progress; splash screen locked in front
+        LOGGED_IN,    // Authentication complete; student dashboard active
+        MANUAL_LOGIN  // First-time manual credential entry
+    }
+
+    private AppState currentState = AppState.MANUAL_LOGIN;
+
     private WebView webView;
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipeRefresh;
@@ -41,17 +49,23 @@ public class MainActivity extends AppCompatActivity {
     private int retryCount = 0;
     private static final int MAX_RETRIES = 3;
 
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable safetyTimeoutRunnable;
+    private static final long SAFETY_TIMEOUT_MS = 15000; // 15s fallback
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // System bar padding for edge-to-edge layout
+        // Soft keyboard & status/nav bar inset padding
         View mainRoot = findViewById(R.id.mainRoot);
         ViewCompat.setOnApplyWindowInsetsListener(mainRoot, (v, windowInsets) -> {
-            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets insets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime()
+            );
             v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
-            return WindowInsetsCompat.CONSUMED;
+            return windowInsets;
         });
 
         prefs = getSharedPreferences("GIET_ERP_PREFS", MODE_PRIVATE);
@@ -64,9 +78,39 @@ public class MainActivity extends AppCompatActivity {
         swipeRefresh = findViewById(R.id.swipeRefresh);
         splashLayout = findViewById(R.id.splashLayout);
 
+        // Decide state immediately upon launch
+        if (hasSavedCredentials()) {
+            currentState = AppState.LOGGING_IN;
+            splashLayout.setVisibility(View.VISIBLE);
+            splashLayout.setAlpha(1.0f);
+            webView.setVisibility(View.INVISIBLE);
+            swipeRefresh.setEnabled(false);
+
+            // Safety timeout: if ERP is down/slow, safely reveal the page so user isn't stuck
+            safetyTimeoutRunnable = () -> {
+                if (currentState == AppState.LOGGING_IN) {
+                    Log.w(TAG, "Safety timeout reached -> Revealing page.");
+                    revealDashboardOrLogin(false);
+                }
+            };
+            mainHandler.postDelayed(safetyTimeoutRunnable, SAFETY_TIMEOUT_MS);
+        } else {
+            currentState = AppState.MANUAL_LOGIN;
+            splashLayout.setVisibility(View.GONE);
+            webView.setVisibility(View.VISIBLE);
+            swipeRefresh.setEnabled(true);
+        }
+
         swipeRefresh.setOnRefreshListener(() -> {
             isAutoFilling = false;
             retryCount = 0;
+            if (isLoginPage(webView.getUrl()) && hasSavedCredentials()) {
+                currentState = AppState.LOGGING_IN;
+                splashLayout.setVisibility(View.VISIBLE);
+                splashLayout.setAlpha(1.0f);
+                webView.setVisibility(View.INVISIBLE);
+                swipeRefresh.setEnabled(false);
+            }
             webView.reload();
         });
 
@@ -89,6 +133,44 @@ public class MainActivity extends AppCompatActivity {
         webView.loadUrl(ERP_PRIMARY_URL);
     }
 
+    private boolean hasSavedCredentials() {
+        if (prefs == null) return false;
+        String user = prefs.getString("username", "").trim();
+        String pass = prefs.getString("password", "").trim();
+        return !user.isEmpty() && !pass.isEmpty();
+    }
+
+    /**
+     * Smoothly hides the splash overlay and brings the WebView into view.
+     */
+    private void revealDashboardOrLogin(boolean isSuccess) {
+        if (safetyTimeoutRunnable != null) {
+            mainHandler.removeCallbacks(safetyTimeoutRunnable);
+            safetyTimeoutRunnable = null;
+        }
+
+        currentState = isSuccess ? AppState.LOGGED_IN : AppState.MANUAL_LOGIN;
+
+        runOnUiThread(() -> {
+            webView.setVisibility(View.VISIBLE);
+            if (splashLayout.getVisibility() == View.VISIBLE) {
+                splashLayout.animate()
+                    .alpha(0f)
+                    .setDuration(250)
+                    .withEndAction(() -> {
+                        splashLayout.setVisibility(View.GONE);
+                        splashLayout.setAlpha(1.0f);
+                        swipeRefresh.setEnabled(true);
+                        swipeRefresh.setRefreshing(false);
+                    })
+                    .start();
+            } else {
+                swipeRefresh.setEnabled(true);
+                swipeRefresh.setRefreshing(false);
+            }
+        });
+    }
+
     private void setupWebView() {
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -103,9 +185,6 @@ public class MainActivity extends AppCompatActivity {
             "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
         );
 
-        // Enable Android Autofill / Google Password Manager inside WebView
-        webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
-
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
         cookieManager.setAcceptThirdPartyCookies(webView, true);
@@ -116,23 +195,29 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                if (newProgress < 100) {
-                    progressBar.setVisibility(View.VISIBLE);
-                    progressBar.setProgress(newProgress);
-                } else {
+                if (currentState == AppState.LOGGING_IN) {
                     progressBar.setVisibility(View.GONE);
-                    String username = prefs.getString("username", "").trim();
-                    String password = prefs.getString("password", "").trim();
-                    boolean hasSaved = !username.isEmpty() && !password.isEmpty();
-                    if (!(isLoginPage(view.getUrl()) && hasSaved)) {
+                    if (newProgress >= 35) {
+                        checkPageAuthStatus();
+                    }
+                } else {
+                    if (newProgress < 100) {
+                        progressBar.setVisibility(View.VISIBLE);
+                        progressBar.setProgress(newProgress);
+                    } else {
+                        progressBar.setVisibility(View.GONE);
                         swipeRefresh.setRefreshing(false);
                     }
                 }
 
-                // Early injection & instant credential pre-fill as soon as DOM renders
-                if (newProgress >= 20 && isLoginPage(view.getUrl())) {
-                    injectCredentialCaptureAndAutofill();
-                    prefillSavedCredentialsOnly();
+                if (isLoginPage(view.getUrl())) {
+                    if (newProgress >= 20) {
+                        injectCredentialCaptureAndAutofill();
+                        prefillSavedCredentialsOnly();
+                    }
+                    if (newProgress >= 35) {
+                        triggerCaptchaDetection();
+                    }
                 }
             }
         });
@@ -141,17 +226,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                String username = prefs.getString("username", "").trim();
-                String password = prefs.getString("password", "").trim();
-                boolean hasSaved = !username.isEmpty() && !password.isEmpty();
-                
-                if (isLoginPage(url) && hasSaved) {
+                if (currentState == AppState.LOGGING_IN) {
                     webView.setVisibility(View.INVISIBLE);
                     splashLayout.setVisibility(View.VISIBLE);
-                    swipeRefresh.post(() -> swipeRefresh.setRefreshing(false));
-                } else {
-                    webView.setVisibility(View.VISIBLE);
-                    splashLayout.setVisibility(View.GONE);
+                    swipeRefresh.setEnabled(false);
+                }
+            }
+
+            @Override
+            public void onPageCommitVisible(WebView view, String url) {
+                super.onPageCommitVisible(view, url);
+                if (currentState == AppState.LOGGING_IN) {
+                    checkPageAuthStatus();
                 }
             }
 
@@ -162,8 +248,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                // Ensure page loads even if intermediate SSL certs have issues on college network
-                Log.w(TAG, "SSL Warning encountered: " + error.toString() + " -> Proceeding seamlessly.");
+                Log.w(TAG, "SSL Warning encountered -> Proceeding seamlessly.");
                 handler.proceed();
             }
 
@@ -174,58 +259,32 @@ public class MainActivity extends AppCompatActivity {
                     String failingUrl = request.getUrl().toString();
                     Log.w(TAG, "Failed loading URL: " + failingUrl);
 
-                    // If HTTPS fails or times out, fallback to HTTP (and vice versa)
+                    // Automatic HTTPS <-> HTTP fallback
                     if (failingUrl.startsWith("https://")) {
                         String httpFallback = failingUrl.replaceFirst("^https://", "http://");
-                        Log.i(TAG, "Switching to HTTP fallback: " + httpFallback);
                         view.post(() -> view.loadUrl(httpFallback));
                     } else if (failingUrl.startsWith("http://")) {
                         String httpsFallback = failingUrl.replaceFirst("^http://", "https://");
-                        Log.i(TAG, "Switching to HTTPS fallback: " + httpsFallback);
                         view.post(() -> view.loadUrl(httpsFallback));
                     }
                 }
             }
 
             @Override
-            public void onPageCommitVisible(WebView view, String url) {
-                super.onPageCommitVisible(view, url);
-                if (isLoginPage(url)) {
-                    injectCredentialCaptureAndAutofill();
-                    prefillSavedCredentialsOnly();
-                }
-            }
-
-            @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                Log.d(TAG, "Page Finished: " + url);
-
-                // Flush cookies to ensure session persistence
+                Log.d(TAG, "Page Finished: " + url + " | State: " + currentState);
                 CookieManager.getInstance().flush();
 
-                boolean isLogin = isLoginPage(url);
                 isAutoFilling = false;
-                
-                if (!isLogin) {
-                    webView.setVisibility(View.VISIBLE);
-                    splashLayout.setVisibility(View.GONE);
-                    swipeRefresh.setRefreshing(false);
-                }
 
-                if (isLogin) {
-                    // 1. Inject credential auto-capture and Google Password Manager hooks
-                    injectCredentialCaptureAndAutofill();
-                    prefillSavedCredentialsOnly();
-
-                    // Prompt Android Autofill / Google Password Manager
-                    triggerAndroidAutofill();
-
-                    // 2. Trigger CAPTCHA detection & solving (auto-login if saved, prefill if 1st time)
-                    webView.postDelayed(() -> triggerCaptchaDetection(), 250);
+                if (currentState == AppState.LOGGING_IN) {
+                    checkPageAuthStatus();
                 } else {
-                    // When leaving login page upon successful login, notify AutofillManager to save credentials
-                    commitAndroidAutofill();
+                    if (isLoginPage(url)) {
+                        injectCredentialCaptureAndAutofill();
+                        triggerCaptchaDetection();
+                    }
                 }
             }
         });
@@ -259,39 +318,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Triggers Android Autofill (Google Password Manager) on the WebView.
+     * Checks whether the current page is an authenticated student dashboard vs the login form.
      */
-    private void triggerAndroidAutofill() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                AutofillManager afm = getSystemService(AutofillManager.class);
-                if (afm != null && afm.isEnabled()) {
-                    afm.requestAutofill(webView);
+    private void checkPageAuthStatus() {
+        if (currentState != AppState.LOGGING_IN) return;
+        webView.evaluateJavascript(
+            "(function() {" +
+            "   var userField = document.getElementById('textUser') || document.querySelector(\"input[name='vchUserName' i]\");" +
+            "   var passField = document.getElementById('textPassword') || document.querySelector(\"input[name='vchPassword' i]\");" +
+            "   var hasLoginForm = !!(userField && passField);" +
+            "   var bodyLength = (document.body && document.body.innerHTML) ? document.body.innerHTML.length : 0;" +
+            "   if (!hasLoginForm && bodyLength > 100) {" +
+            "       return 'DASHBOARD';" +
+            "   } else if (hasLoginForm) {" +
+            "       return 'LOGIN';" +
+            "   }" +
+            "   return 'LOADING';" +
+            "})();",
+            result -> {
+                if (result != null && result.contains("DASHBOARD")) {
+                    Log.i(TAG, "Student Dashboard confirmed -> Revealing immediately!");
+                    revealDashboardOrLogin(true);
+                } else if (result != null && result.contains("LOGIN")) {
+                    injectCredentialCaptureAndAutofill();
+                    prefillSavedCredentialsOnly();
+                    triggerCaptchaDetection();
                 }
-            } catch (Exception e) {
-                Log.d(TAG, "Autofill request: " + e.getMessage());
             }
-        }
+        );
     }
 
     /**
-     * Commits Android Autofill session after successful login so Google Password Manager prompts to save.
-     */
-    private void commitAndroidAutofill() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                AutofillManager afm = getSystemService(AutofillManager.class);
-                if (afm != null && afm.isEnabled()) {
-                    afm.commit();
-                }
-            } catch (Exception e) {
-                Log.d(TAG, "Autofill commit: " + e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Checks if current URL is the ERP login page (supports both HTTP & HTTPS).
+     * Checks if current URL is the ERP login page.
      */
     private boolean isLoginPage(String url) {
         if (url == null || url.trim().isEmpty()) return true;
@@ -302,13 +360,13 @@ public class MainActivity extends AppCompatActivity {
             || clean.equals("http://gietbbsrerp.in")
             || clean.contains("gietbbsrerp.in/login")
             || clean.contains("/login")
+            || clean.contains("login.aspx")
             || clean.contains("returnurl")
-            || (clean.contains("gietbbsrerp.in") && (clean.endsWith("/") || clean.endsWith(".in")));
+            || clean.contains("logout");
     }
 
     /**
-     * Injects JavaScript to automatically capture and save credentials on manual login,
-     * unlocks Google Password Manager autofill suggestions, and enables standard HTML autocomplete.
+     * Injects JavaScript to automatically capture and save credentials on manual login.
      */
     private void injectCredentialCaptureAndAutofill() {
         String jsCapture =
@@ -325,21 +383,37 @@ public class MainActivity extends AppCompatActivity {
             "       var passField = document.getElementById('textPassword') || " +
             "                       document.querySelector(\"input[name='vchPassword' i]\") || " +
             "                       document.querySelector(\"input[type='password']\");" +
+            "       var capField  = document.getElementById('CaptchaCode') || " +
+            "                       document.querySelector(\"input[name*='captcha' i]\");" +
             "       var loginBtn  = document.getElementById('LoginButton') || " +
             "                       document.querySelector(\"button[id*='Login' i]\") || " +
             "                       document.querySelector(\"input[type='submit']\") || " +
             "                       document.querySelector(\"button[type='submit']\");" +
             "" +
+            "       if (!userField && !passField && document.body && document.body.innerHTML.length > 150) {" +
+            "           if (window.AndroidBridge && window.AndroidBridge.onDashboardDetected) {" +
+            "               window.AndroidBridge.onDashboardDetected();" +
+            "           }" +
+            "       }" +
+            "" +
+            "       function scrollElementToView(elem) {" +
+            "           if (!elem) return;" +
+            "           setTimeout(function() {" +
+            "               try {" +
+            "                   elem.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });" +
+            "               } catch (e) {" +
+            "                   try { elem.scrollIntoView(false); } catch (err) {}" +
+            "               }" +
+            "           }, 250);" +
+            "       }" +
+            "" +
             "       if (userField) {" +
             "           userField.setAttribute('autocomplete', 'username');" +
-            "           userField.setAttribute('autofill-information', 'username');" +
             "           if (!userField._afHooked) {" +
             "               userField._afHooked = true;" +
             "               ['focus', 'click', 'touchstart'].forEach(function(evt) {" +
             "                   userField.addEventListener(evt, function() {" +
-            "                       if (window.AndroidBridge && window.AndroidBridge.requestAutofill) {" +
-            "                           window.AndroidBridge.requestAutofill();" +
-            "                       }" +
+            "                       scrollElementToView(userField);" +
             "                   });" +
             "               });" +
             "               ['input', 'change', 'blur', 'keyup', 'paste'].forEach(function(evt) {" +
@@ -353,14 +427,11 @@ public class MainActivity extends AppCompatActivity {
             "       }" +
             "       if (passField) {" +
             "           passField.setAttribute('autocomplete', 'current-password');" +
-            "           passField.setAttribute('autofill-information', 'password');" +
             "           if (!passField._afHooked) {" +
             "               passField._afHooked = true;" +
             "               ['focus', 'click', 'touchstart'].forEach(function(evt) {" +
             "                   passField.addEventListener(evt, function() {" +
-            "                       if (window.AndroidBridge && window.AndroidBridge.requestAutofill) {" +
-            "                           window.AndroidBridge.requestAutofill();" +
-            "                       }" +
+            "                       scrollElementToView(passField);" +
             "                   });" +
             "               });" +
             "               ['input', 'change', 'blur', 'keyup', 'paste'].forEach(function(evt) {" +
@@ -368,6 +439,16 @@ public class MainActivity extends AppCompatActivity {
             "                       if (window.AndroidBridge && window.AndroidBridge.saveField) {" +
             "                           window.AndroidBridge.saveField('pass', passField.value);" +
             "                       }" +
+            "                   });" +
+            "               });" +
+            "           }" +
+            "       }" +
+            "       if (capField) {" +
+            "           if (!capField._afHooked) {" +
+            "               capField._afHooked = true;" +
+            "               ['focus', 'click', 'touchstart'].forEach(function(evt) {" +
+            "                   capField.addEventListener(evt, function() {" +
+            "                       scrollElementToView(capField);" +
             "                   });" +
             "               });" +
             "           }" +
@@ -429,13 +510,11 @@ public class MainActivity extends AppCompatActivity {
             "(function() {" +
             "   var img = document.getElementById('img-captcha');" +
             "   var userField = document.getElementById('textUser');" +
-            "   if (!img || !userField) {" +
-            "       return;" +
-            "   }" +
+            "   if (!img || !userField) return;" +
             "   function extract() {" +
             "       try {" +
             "           if (!img.complete || img.naturalWidth === 0 || img.naturalHeight === 0) {" +
-            "               setTimeout(extract, 150);" +
+            "               setTimeout(extract, 50);" +
             "               return;" +
             "           }" +
             "           var canvas = document.createElement('canvas');" +
@@ -448,8 +527,6 @@ public class MainActivity extends AppCompatActivity {
             "           var dataUrl = canvas.toDataURL('image/png');" +
             "           if (dataUrl && dataUrl.length > 50) {" +
             "               window.AndroidBridge.onCaptchaExtracted(dataUrl);" +
-            "           } else {" +
-            "               setTimeout(extract, 200);" +
             "           }" +
             "       } catch (e) {" +
             "           if (window.AndroidBridge) {" +
@@ -458,10 +535,10 @@ public class MainActivity extends AppCompatActivity {
             "       }" +
             "   }" +
             "   if (img.complete && img.naturalWidth > 0) {" +
-            "       setTimeout(extract, 200);" +
+            "       extract();" +
             "   } else {" +
-            "       img.onload = function() { setTimeout(extract, 200); };" +
-            "       setTimeout(extract, 400);" +
+            "       img.onload = extract;" +
+            "       setTimeout(extract, 100);" +
             "   }" +
             "})();";
 
@@ -499,7 +576,7 @@ public class MainActivity extends AppCompatActivity {
             "               var form = userField.closest('form') || document.forms[0];" +
             "               if (form) { form.submit(); }" +
             "           }" +
-            "       }, 120);" +
+            "       }, 30);" +
             "   }" +
             "})();";
 
@@ -586,13 +663,11 @@ public class MainActivity extends AppCompatActivity {
 
             CaptchaSolver.solveBase64(base64Data, captchaText -> {
                 Log.d(TAG, "OCR Solved Text: " + captchaText);
-                String username = prefs.getString("username", "").trim();
-                String password = prefs.getString("password", "").trim();
-                boolean hasSavedCredentials = !username.isEmpty() && !password.isEmpty();
+                boolean hasSaved = hasSavedCredentials();
 
                 if (captchaText != null && captchaText.trim().length() == 4) {
                     retryCount = 0;
-                    if (hasSavedCredentials) {
+                    if (hasSaved) {
                         fillFormAndSubmit(captchaText.trim());
                     } else {
                         fillCaptchaOnly(captchaText.trim());
@@ -606,27 +681,28 @@ public class MainActivity extends AppCompatActivity {
                             webView.postDelayed(() -> triggerCaptchaDetection(), 500);
                         });
                     } else {
-                        runOnUiThread(() -> {
-                            isAutoFilling = false;
-                            webView.setVisibility(View.VISIBLE);
-                            splashLayout.setVisibility(View.GONE);
-                            swipeRefresh.setRefreshing(false);
-                            if (captchaText != null && !captchaText.isEmpty()) {
-                                if (hasSavedCredentials) {
-                                    fillFormAndSubmit(captchaText.trim());
-                                } else {
-                                    fillCaptchaOnly(captchaText.trim());
-                                }
+                        // Exceeded retries -> reveal the page to the user
+                        revealDashboardOrLogin(false);
+                        if (captchaText != null && !captchaText.isEmpty()) {
+                            if (hasSaved) {
+                                fillFormAndSubmit(captchaText.trim());
+                            } else {
+                                fillCaptchaOnly(captchaText.trim());
                             }
-                        });
+                        }
                     }
                 }
             });
         }
 
         @JavascriptInterface
-        public void requestAutofill() {
-            triggerAndroidAutofill();
+        public void onDashboardDetected() {
+            runOnUiThread(() -> {
+                if (currentState == AppState.LOGGING_IN) {
+                    Log.i(TAG, "Dashboard detected via bridge -> Revealing immediately!");
+                    revealDashboardOrLogin(true);
+                }
+            });
         }
 
         @JavascriptInterface
