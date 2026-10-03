@@ -16,10 +16,13 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    def keystorePath = System.getenv("KEYSTORE_FILE")
+    def hasKeystore = keystorePath != null && !keystorePath.trim().isEmpty() && file(keystorePath).exists()
+
     signingConfigs {
         release {
-            if (System.getenv("KEYSTORE_FILE") != null && file(System.getenv("KEYSTORE_FILE")).exists()) {
-                storeFile file(System.getenv("KEYSTORE_FILE"))
+            if (hasKeystore) {
+                storeFile file(keystorePath)
                 storePassword System.getenv("KEYSTORE_PASSWORD")
                 keyAlias System.getenv("KEY_ALIAS")
                 keyPassword System.getenv("KEY_PASSWORD")
@@ -31,7 +34,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            if (System.getenv("KEYSTORE_FILE") != null && file(System.getenv("KEYSTORE_FILE")).exists()) {
+            if (hasKeystore) {
                 signingConfig signingConfigs.release
             } else {
                 signingConfig signingConfigs.debug
