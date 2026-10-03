@@ -4,7 +4,7 @@
 
 <br />
 
-<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v2.2.0.apk">
+<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v3.0.apk">
   <img src="../assets/download_btn.svg" alt="Download APK" width="260" />
 </a>
 
@@ -33,12 +33,7 @@ Output location: `app/build/outputs/apk/debug/app-debug.apk`
 ```bash
 ./gradlew assembleRelease
 ```
-Output location: `app/build/outputs/apk/release/app-release-unsigned.apk` (or signed APK if signing config is provided)
-
-You can copy the generated APK into this folder:
-```bash
-cp app/build/outputs/apk/debug/app-debug.apk releases/erp-autologin-v1.0.0.apk
-```
+Output location: `app/build/outputs/apk/release/app-release.apk`
 
 ---
 
@@ -49,12 +44,12 @@ cp app/build/outputs/apk/debug/app-debug.apk releases/erp-autologin-v1.0.0.apk
 1. **Automatic Tag Release:**
    Tag your commit and push it to GitHub:
    ```bash
-   git tag v2.1.0
-   git push origin v2.1.0
+   git tag v3.0
+   git push origin v3.0
    ```
    GitHub Actions will automatically:
    - Build the release APK with Gradle & JDK 17
-   - Name it `erp-autologin-v2.1.0.apk` & `erp-autologin.apk`
+   - Name it `erp-autologin-v3.0.apk` & `erp-autologin.apk`
    - Calculate SHA256 checksums
    - Publish a new release in the **Releases** section with release notes and downloadable APK attachments.
 

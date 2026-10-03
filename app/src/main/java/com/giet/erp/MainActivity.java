@@ -46,12 +46,13 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences prefs;
 
     private boolean isAutoFilling = false;
+    private boolean isSubmitted = false;
     private int retryCount = 0;
     private static final int MAX_RETRIES = 3;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Runnable safetyTimeoutRunnable;
-    private static final long SAFETY_TIMEOUT_MS = 15000; // 15s fallback
+    private static final long SAFETY_TIMEOUT_MS = 6000; // 6s fast fallback
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
         swipeRefresh.setOnRefreshListener(() -> {
             isAutoFilling = false;
+            isSubmitted = false;
             retryCount = 0;
             if (isLoginPage(webView.getUrl()) && hasSavedCredentials()) {
                 currentState = AppState.LOGGING_IN;
@@ -226,6 +228,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
+                isAutoFilling = false;
+                isSubmitted = false;
                 if (currentState == AppState.LOGGING_IN) {
                     webView.setVisibility(View.INVISIBLE);
                     splashLayout.setVisibility(View.VISIBLE);
@@ -340,9 +344,11 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "Student Dashboard confirmed -> Revealing immediately!");
                     revealDashboardOrLogin(true);
                 } else if (result != null && result.contains("LOGIN")) {
-                    injectCredentialCaptureAndAutofill();
-                    prefillSavedCredentialsOnly();
-                    triggerCaptchaDetection();
+                    if (!isSubmitted) {
+                        injectCredentialCaptureAndAutofill();
+                        prefillSavedCredentialsOnly();
+                        triggerCaptchaDetection();
+                    }
                 }
             }
         );
@@ -504,7 +510,7 @@ public class MainActivity extends AppCompatActivity {
      * Executes JavaScript to extract the CAPTCHA image element and send base64 data to AndroidBridge.
      */
     private void triggerCaptchaDetection() {
-        if (isAutoFilling) return;
+        if (isAutoFilling || isSubmitted) return;
 
         String jsCode =
             "(function() {" +
@@ -549,6 +555,10 @@ public class MainActivity extends AppCompatActivity {
      * Auto-fills saved credentials + CAPTCHA and submits the login form.
      */
     private void fillFormAndSubmit(String solvedCaptcha) {
+        if (isSubmitted) return;
+        isSubmitted = true;
+        isAutoFilling = true;
+
         String username = prefs.getString("username", "").trim();
         String password = prefs.getString("password", "").trim();
         final String cleanCaptcha = (solvedCaptcha != null) ? solvedCaptcha.toUpperCase().trim() : "";
@@ -580,10 +590,7 @@ public class MainActivity extends AppCompatActivity {
             "   }" +
             "})();";
 
-        runOnUiThread(() -> {
-            webView.evaluateJavascript(jsFill, null);
-            isAutoFilling = false;
-        });
+        runOnUiThread(() -> webView.evaluateJavascript(jsFill, null));
     }
 
     /**
@@ -677,6 +684,7 @@ public class MainActivity extends AppCompatActivity {
                         retryCount++;
                         runOnUiThread(() -> {
                             isAutoFilling = false;
+                            isSubmitted = false;
                             refreshCaptchaOnPage();
                             webView.postDelayed(() -> triggerCaptchaDetection(), 500);
                         });

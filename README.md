@@ -1,12 +1,12 @@
 <div align="center">
 
-# 🎓 GIET ERP Auto-Login & AI CAPTCHA Solver v2.2.0
+# 🎓 GIET ERP Auto-Login & AI CAPTCHA Solver v3.0
 
 **Automated login assistant with on-device AI CAPTCHA recognition tailored for GIET BBS R ERP.**
 
 <br />
 
-<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v2.2.0.apk">
+<a href="https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v3.0.apk">
   <img src="assets/download_btn.svg" alt="Download APK" width="260" />
 </a>
 
@@ -26,7 +26,7 @@
 
 ---
 
-> 📥 **Direct Download:** [**Click to Download erp-autologin-v2.2.0.apk**](https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v2.2.0.apk) | [View All Releases](https://github.com/amitpadhan525/erp-autologin/releases)
+> 📥 **Direct Download:** [**Click to Download erp-autologin-v3.0.apk**](https://github.com/amitpadhan525/erp-autologin/releases/latest/download/erp-autologin-v3.0.apk) | [View All Releases](https://github.com/amitpadhan525/erp-autologin/releases)
 
 ---
 
