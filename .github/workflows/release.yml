@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 2.1.0 or v2.1.0). Leave empty to use version from app/build.gradle'
+        description: 'Release version (e.g. 2.2.0 or v2.2.0). Leave empty to use version from app/build.gradle'
         required: false
         default: ''
       draft:
@@ -42,6 +42,9 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: Grant Execute Permission to Gradle Wrapper
+        run: chmod +x gradlew
+
       - name: Determine Version
         id: versioning
         run: |
@@ -62,15 +65,17 @@ jobs:
 
       - name: Prepare Signing Keystore (Optional)
         id: prepare_keystore
-        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
         run: |
-          echo "Found RELEASE_KEYSTORE_BASE64 secret, decoding keystore..."
-          KEYSTORE_PATH="${{ runner.temp }}/release.keystore"
-          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > "$KEYSTORE_PATH"
-          echo "KEYSTORE_FILE=${KEYSTORE_PATH}" >> $GITHUB_ENV
-
-      - name: Grant Execute Permission to Gradle Wrapper
-        run: chmod +x gradlew
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Found RELEASE_KEYSTORE_BASE64 secret, decoding keystore..."
+            KEYSTORE_PATH="${{ runner.temp }}/release.keystore"
+            echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_PATH"
+            echo "KEYSTORE_FILE=${KEYSTORE_PATH}" >> $GITHUB_ENV
+          else
+            echo "No custom keystore provided. Will use default debug signing."
+          fi
 
       - name: Build Release APK
         env:
@@ -85,29 +90,28 @@ jobs:
         id: package_assets
         run: |
           mkdir -p dist
-          
-          # Find the generated signed or unsigned APK
+
           APK_PATH=$(find app/build/outputs/apk/release/ -name "*.apk" ! -name "*unsigned*" | head -n 1)
           if [ -z "$APK_PATH" ]; then
             APK_PATH="app/build/outputs/apk/release/app-release-unsigned.apk"
           fi
-          
+
           if [ ! -f "$APK_PATH" ]; then
-            echo "Error: No release APK found!"
+            echo "Error: No release APK found at $APK_PATH"
             exit 1
           fi
 
           VERSIONED_APK="dist/erp-autologin-${TAG_NAME}.apk"
           GENERIC_APK="dist/erp-autologin.apk"
-          
+
           cp "$APK_PATH" "$VERSIONED_APK"
           cp "$APK_PATH" "$GENERIC_APK"
-          
+
           cd dist
           sha256sum "erp-autologin-${TAG_NAME}.apk" > "erp-autologin-${TAG_NAME}.apk.sha256"
           sha256sum "erp-autologin.apk" > "erp-autologin.apk.sha256"
           cd ..
-          
+
           echo "Prepared artifacts:"
           ls -lh dist/
 
@@ -122,8 +126,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ env.TAG_NAME }}
-          IS_DRAFT: ${{ github.event.inputs.draft == 'true' }}
-          IS_PRERELEASE: ${{ github.event.inputs.prerelease == 'true' }}
+          IS_DRAFT: ${{ inputs.draft }}
+          IS_PRERELEASE: ${{ inputs.prerelease }}
         run: |
           EXTRA_FLAGS=()
           if [ "$IS_DRAFT" = "true" ]; then
